@@ -3,42 +3,42 @@
 ## Vehicle Table
 
 ```sql
+
+
+-- Vehicle Table 
 CREATE TABLE Vehicle (
     vehicleID INT PRIMARY KEY,
-    make VARCHAR(50),
-    model VARCHAR(50),
+    make NVARCHAR(50),
+    model NVARCHAR(50),
     Year INT,
     dailyRate DECIMAL(10, 2),
-    available BOOLEAN,
+    available BIT,
     passengerCapacity INT,
     engineCapacity INT
 );
 
-
 -- Customer Table
 CREATE TABLE Customer (
     customerID INT PRIMARY KEY,
-    firstName VARCHAR(50),
-    lastName VARCHAR(50),
-    email VARCHAR(100),
-    phoneNumber VARCHAR(20)
+    firstName NVARCHAR(50),
+    lastName NVARCHAR(50),
+    email NVARCHAR(100),
+    phoneNumber NVARCHAR(20)
 );
 
 -- Lease Table
-
 CREATE TABLE Lease (
     leaseID INT PRIMARY KEY,
     vehicleID INT,
     customerID INT,
     startDate DATE,
     endDate DATE,
-    type VARCHAR(20),
+    [type] NVARCHAR(20),
     FOREIGN KEY (vehicleID) REFERENCES Vehicle(vehicleID),
     FOREIGN KEY (customerID) REFERENCES Customer(customerID)
 );
 
 -- Payment Table
-
 CREATE TABLE Payment (
     paymentID INT PRIMARY KEY,
     leaseID INT,
@@ -47,7 +47,7 @@ CREATE TABLE Payment (
     FOREIGN KEY (leaseID) REFERENCES Lease(leaseID)
 );
 
-
+-- INSERT Data into Vehicle Table
 INSERT INTO Vehicle (vehicleID, make, model, Year, dailyRate, available, passengerCapacity, engineCapacity) 
 VALUES 
     (1, 'Toyota', 'Camry', 2022, 50.00, 1, 4, 1450),
@@ -58,6 +58,7 @@ VALUES
     (6, 'Hyundai', 'Sonata', 2023, 49.00, 0, 7, 1400),
     (7, 'BMW', '3 Series', 2023, 60.00, 1, 7, 2499);
 
+-- INSERT Data into Customer Table
 INSERT INTO Customer (customerID, firstName, lastName, email, phoneNumber)
 VALUES 
     (1, 'John', 'Doe', 'johndoe@example.com', '555-555-5555'),
@@ -71,7 +72,8 @@ VALUES
     (9, 'William', 'Taylor', 'william@example.com', '555-321-6547'),
     (10, 'Olivia', 'Adams', 'olivia@example.com', '555-765-4321');
 
-INSERT INTO Lease (leaseID, vehicleID, customerID, startDate, endDate, type)
+-- INSERT Data into Lease Table
+INSERT INTO Lease (leaseID, vehicleID, customerID, startDate, endDate, [type])
 VALUES 
     (1, 1, 1, '2023-01-01', '2023-01-05', 'Daily'),
     (2, 2, 2, '2023-02-15', '2023-02-28', 'Monthly'),
@@ -84,6 +86,7 @@ VALUES
     (9, 3, 3, '2023-09-07', '2023-09-10', 'Daily'),
     (10, 10, 10, '2023-10-10', '2023-10-31', 'Monthly');
 
+-- INSERT Data into Payment Table
 INSERT INTO Payment (paymentID, leaseID, paymentDate, amount)
 VALUES 
     (1, 1, '2023-01-03', 200.00),
@@ -97,7 +100,7 @@ VALUES
     (9, 9, '2023-09-09', 80.00),
     (10, 10, '2023-10-25', 1500.00);
 
-1: Update the daily rate for a Mercedes car to 68
+Qn 1: Update the daily rate for a Mercedes car to 68
 
 	UPDATE Vehicle SET dailyRate = 68 
 	WHERE make = 'Mercedes';
@@ -109,16 +112,14 @@ WHERE customerID = 1;
 
 3.Rename the "paymentDate" column in the Payment table to "transactionDate". 
 	
-ALTER TABLE Payment
-RENAME COLUMN paymentDate To transactionDate;
-
+EXEC sp_rename 'Payment.paymentDate', 'transactionDate', 'COLUMN';
 
 4.Find a specific customer by email. 
 	SELECT * FROM Customer WHERE email = 'johndoe@example.com';
 
 5.Get active leases for a specific customer. 
 SELECT  * FROM Lease WHERE customerID = 2
-AND endDate >= CURRENT_DATE;
+AND endDate >= GETDATE();
 
 
 6.Find all payments made by a customer with a specific phone number. 
@@ -132,8 +133,8 @@ WHERE Customer.phoneNumber = '555-555-5555';
 FROM Vehicle WHERE available = 1;
 
 8.Find the car with the highest daily rate. 
-	SELECT * FROM Vehicle ORDER BY dailyRate 
-DESCLIMIT 1;
+	SELECT  TOP 1 * FROM Vehicle ORDER BY 
+dailyRate DESC;
 
 9.Retrieve all cars leased by a specific customer.
 	 SELECT * FROM Vehicle WHERE vehicleID IN (
@@ -141,11 +142,11 @@ DESCLIMIT 1;
    	 WHERE customerID = 4 );
 
 10.Find the details of the most recent lease. 
-SELECT * FROM Lease
-ORDER BY startDate DESC LIMIT 1;
+SELECT TOP 1 * FROM Lease
+ORDER BY startDate DESC ;
 
 11.List all payments made in the year 2023. 
-	SELECT *FROM Payment
+	SELECT * FROM Payment
 WHERE YEAR(paymentDate) = 2023;
            
 12.Retrieve customers who have not made any payments. 
@@ -165,7 +166,6 @@ GROUP BY Vehicle.vehicleID;
     	Lease ON Customer.customerID = Lease.customerID
 LEFT JOIN  Payment ON Lease.leaseID = Payment.leaseID
 GROUP BY Customer.customerID;
-
 15.List Car Details for Each Lease.
 	SELECT   Lease.*, Vehicle.* FROM Lease
 JOIN   Vehicle ON Lease.vehicleID = Vehicle.vehicleID;
@@ -177,16 +177,16 @@ JOIN   Vehicle ON Lease.vehicleID = Vehicle.vehicleID;
 FROM Lease JOIN 
     Customer ON Lease.customerID = Customer.customerID JOIN 
     Vehicle ON Lease.vehicleID = Vehicle.vehicleID
-WHERE  Lease.endDate >= CURRENT_DATE;
+WHERE  Lease.endDate >= GETDATE();
 
 17.Find the Customer Who Has Spent the Most on Leases. 
-	SELECT Customer.customerID,Customer.firstName, Customer.lastName,
+	SELECT  TOP 1 Customer.customerID,Customer.firstName, Customer.lastName,
   	 SUM(Payment.amount) AS totaspent
 FROM  Customer JOIN 
                Lease ON Customer.customerID = Lease.customerID
 JOIN Payment ON Lease.leaseID = Payment.leaseID
 GROUP BY Customer.customerID
-ORDER BY totalspent DESC LIMIT 1;
+ORDER BY totalspent DESC ;
 
 18.List All Cars with Their Current Lease Information.
 	
@@ -194,6 +194,4 @@ ORDER BY totalspent DESC LIMIT 1;
 	SELECT  Vehicle.*,  Lease.*
 FROM  Vehicle LEFT JOIN 
    	 Lease ON Vehicle.vehicleID = Lease.vehicleID
-WHERE  Lease.endDate >= CURRENT_DATE OR Lease.endDate IS NULL;
-
-
+WHERE  Lease.endDate >= GETDATE OR Lease.endDate IS NULL;
